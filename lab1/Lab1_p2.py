@@ -1,5 +1,7 @@
-# student name:
-# student number: 
+'''
+Done by : Ow Yong Chee Seng
+SID: 61164992
+'''
 def displayPyramid(size: int) -> None:
     """
         This method prints a pyramid of size size.
@@ -17,13 +19,16 @@ def displayPyramid(size: int) -> None:
     layer = 1 
     while layer <=size: 
         string = ""
+        #appending the first sequence of double spaces before the digit
         for i in range(size - layer):
             string += "  "
+        #appending the number in decending order based on layer height
         for j in range(layer):
             string += " " + str(layer-j)
+        #appending the ascending number after 1, starting from 2 until layer height
         for k in range(2,layer+1):
             string += " " + str(k)
-        print(string)
+        print(string) #one row produced, go to newline and increment layer height
         layer +=1    
         
 if __name__ == "__main__":

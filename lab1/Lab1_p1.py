@@ -1,5 +1,7 @@
-# student name:
-# student number: 
+'''
+Done by : Ow Yong Chee Seng
+SID: 61164992
+'''
 import math
 
 def solveQuadratic(a: float, b: float, c: float) -> str:
@@ -10,10 +12,13 @@ def solveQuadratic(a: float, b: float, c: float) -> str:
         described in the specification.
     """
     if b**2 - 4*a*c >0:
-        r1 = (-b + math.sqrt(b**2 - 4*a*c))/(2*a)
+        #check if there is two roots for the equation
+        r1 = (-b + math.sqrt(b**2 - 4*a*c))/(2*a) 
         r2 = (-b - math.sqrt(b**2 -4*a*c))/(2*a) 
+        #fstring used, .2f basically means 2 decimal points 
         return f"The roots are {r1:.2f} and {r2:.2f}"
     elif b**2 -4*a*c == 0:
+        #there is only one root 
         r1 = -b / (2*a) 
         return f"The root is {r1:.2f}"
     else:
