@@ -1,11 +1,12 @@
-# Name:
-# Student number: 
+# Name: Ow Yong Chee Seng   
+# Student number: 61164992
 
 """
     This program implements one variety of the snake 
     game (https://en.wikipedia.org/wiki/Snake_(video_game_genre))
 """
 
+from asyncio import Task
 import threading
 import queue        #the thread-safe queue from Python standard library
 
@@ -34,7 +35,8 @@ class Gui():
         self.canvas.pack()
         #create starting game icons for snake and the prey
         self.snakeIcon = self.canvas.create_line(
-            (0, 0), (0, 0), fill=ICON_COLOUR, width=SNAKE_ICON_WIDTH)
+            (0, 0), (0,0), fill=ICON_COLOUR, width=SNAKE_ICON_WIDTH)
+        #create prey icon 
         self.preyIcon = self.canvas.create_rectangle(
             0, 0, 0, 0, fill=ICON_COLOUR, outline=ICON_COLOUR)
         #display starting score of 0
@@ -61,9 +63,9 @@ class QueueHandler():
         This class implements the queue handler for the game.
     """
     def __init__(self, queue, gui):
-        self.queue = queue
+        self.queue = queue #initialise the queue
         self.gui = gui
-        self.queueHandler()
+        self.queueHandler() #use this function to operate
     
     def queueHandler(self):
         '''
@@ -80,15 +82,15 @@ class QueueHandler():
         try:
             while True:
                 task = self.queue.get_nowait()
-                if "game_over" in task:
-                    gui.gameOver()
+                if "game_over" in task: 
+                    gui.gameOver() #call gameover function 
                 elif "move" in task:
                     points = [x for point in task["move"] for x in point]
-                    gui.canvas.coords(gui.snakeIcon, *points)
-                elif "prey" in task:
+                    gui.canvas.coords(gui.snakeIcon, *points) #change canvas coordinates of snake icon 
+                elif "prey" in task: #put a new prey on screen
                     gui.canvas.coords(gui.preyIcon, *task["prey"])
                 elif "score" in task:
-                    gui.canvas.itemconfigure(
+                    gui.canvas.itemconfigure( #display score on screen 
                         gui.score, text=f"Your Score: {task['score']}")
                 self.queue.task_done()
         except queue.Empty:
@@ -110,12 +112,18 @@ class Game():
         #note that it is a list of tuples, each being an
         # (x, y) tuple. Initially its size is 5 tuples.       
         self.snakeCoordinates = [(495, 55), (485, 55), (475, 55),
-                                 (465, 55), (455, 55)]
+                                 (465, 55), (455, 55)] 
         #initial direction of the snake
         self.direction = "Left"
         self.gameNotOver = True
+        #### mycode
+        self.preyXLocation = 0
+        self.preyYLocation = 0
+        #### mycode
         self.createNewPrey()
 
+        
+        
     def superloop(self) -> None:
         """
             This method implements a main loop
@@ -127,7 +135,9 @@ class Game():
         SPEED = 0.15     #speed of snake updates (sec)
         while self.gameNotOver:
             #complete the method implementation below
-            pass #remove this line from your implemenation
+            time.sleep(SPEED) #update every 0.15 seconds
+            self.move()
+            # pass #remove this line from your implemenation
 
     def whenAnArrowKeyIsPressed(self, e) -> None:
         """ 
@@ -162,6 +172,27 @@ class Game():
         NewSnakeCoordinates = self.calculateNewCoordinates()
         #complete the method implementation below
 
+        #check if gameover 
+        print(NewSnakeCoordinates)
+        self.isGameOver(NewSnakeCoordinates)
+
+        #check if capture prey
+        print(f"check prey location : {self.preyXLocation, self.preyYLocation}")
+        #have buffer of 5 pixels because aiming to get one random pixel is hard (especially when we move in multiples of 10 )
+        if NewSnakeCoordinates[0] >= self.preyXLocation -5 and NewSnakeCoordinates[0] <= self.preyXLocation +5 \
+            and NewSnakeCoordinates[1] >= self.preyYLocation-5 and NewSnakeCoordinates[1] <= self.preyYLocation +5:
+            #update score
+            self.score+=1
+            gameQueue.put({"score":self.score})
+            # add one block to the snake 
+            self.snakeCoordinates.append(NewSnakeCoordinates) #add the new snake coorcinates 
+            #put new prey 
+            self.createNewPrey()
+        else : 
+            #do not add one block to snake (remove one then add one head so length is the same) 
+            self.snakeCoordinates.pop(0) #move accordingly 
+            self.snakeCoordinates.append(NewSnakeCoordinates) #add the new snake coorcinates 
+        gameQueue.put({"move":self.snakeCoordinates}) #move the snake if all is well 
 
     def calculateNewCoordinates(self) -> tuple:
         """
@@ -172,9 +203,21 @@ class Game():
             head of the snake.
             It is used by the move() method.    
         """
-        lastX, lastY = self.snakeCoordinates[-1]
+        lastX, lastY= self.snakeCoordinates[-1]
         #complete the method implementation below
-
+        if self.direction == "Left":
+            # print("left")
+            lastX -= 10
+        elif self.direction == "Right":
+            # print("right")
+            lastX +=10
+        elif self.direction == "Up":
+            # print("up")
+            lastY-=10
+        else : 
+            # print("down")
+            lastY+=10        
+        return lastX, lastY
 
     def isGameOver(self, snakeCoordinates) -> None:
         """
@@ -186,7 +229,15 @@ class Game():
         """
         x, y = snakeCoordinates
         #complete the method implementation below
-
+        #out of bound check
+        if x> WINDOW_WIDTH or x< 0 or y > WINDOW_HEIGHT or y <0 : 
+            self.gameNotOver= False
+            gameQueue.put("game_over")
+        #self bite check
+        for i in range(len(self.snakeCoordinates)):
+            if x == self.snakeCoordinates[i][0] and y == self.snakeCoordinates[i][1] : 
+                self.gameNotOver= False
+                gameQueue.put("game_over")
     def createNewPrey(self) -> None:
         """ 
             This methods randomly picks an x and a y as the coordinate 
@@ -200,7 +251,11 @@ class Game():
         """
         THRESHOLD = 15   #sets how close prey can be to borders
         #complete the method implementation below
-
+        self.preyXLocation = random.randint(THRESHOLD, WINDOW_WIDTH-THRESHOLD)
+        self.preyYLocation = random.randint(THRESHOLD, WINDOW_HEIGHT-THRESHOLD)
+        preyCoordinates = [self.preyXLocation-5, self.preyYLocation-5, self.preyXLocation+5, self.preyYLocation+5]
+        #add prey task to queue
+        gameQueue.put({"prey": preyCoordinates})
 
 if __name__ == "__main__":
     #some constants for our GUI
